@@ -239,7 +239,7 @@ class App extends React.Component {
   }
 
   renderExport = () => {
-    return <div style={{flexDirection: "row",width: "100%", alignItems: "center", justifyContent: "space-between"}}>
+    return <div className="export-wrapper">
       {this.renderSendMail()}
       {this.renderDownload()}
     </div>

@@ -72,6 +72,13 @@
   border-radius: 5px;
 }
 
+.export-wrapper {
+  flex-direction: row;
+  width: 100%; 
+  align-items: center;
+  justify-content: space-between;
+}
+
 label {
   font-size: 10px;
 }

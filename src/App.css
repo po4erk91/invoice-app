@@ -1,0 +1,77 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.send-mail {
+  height: 30px;
+  margin-top: 30px; 
+  width: 20%; 
+  cursor: pointer; 
+  background: #5a5655;
+  color: white;
+  border: none;
+  font-size: 17px;
+  border-radius: 5px;
+}
+
+.message {
+  margin-top: 20px;
+  color: orange;
+}
+
+.label {
+  font-size: 17px;
+}
+
+.inputfile {
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+.input-wrapper {
+  width: 70%; 
+  margin-left: -30px; 
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.input-block {
+  height: 70px;
+}
+
+.inputfile + label {
+	cursor: pointer;
+}
+
+.generate {
+  height: 30px;
+  margin-top: 30px;
+  width: 20%;
+  cursor: pointer;
+  background: #5a5655;
+  color: white;
+  border: none;
+  font-size: 17px;
+  border-radius: 5px;
+}
+
+label {
+  font-size: 10px;
+}

@@ -1,3 +1,11 @@
+input {
+  outline:none;
+}
+
+input:hover{
+  color: orange;
+}
+
 .App {
   text-align: center;
 }
@@ -61,6 +69,21 @@
 }
 
 .generate {
+  height: 30px;
+  margin-top: 30px;
+  width: 20%;
+  cursor: pointer;
+  background: #5a5655;
+  color: white;
+  border: none;
+  font-size: 17px;
+  border-radius: 5px;
+}
+
+.reset {
+  position: absolute;
+  top: 0px;
+  right: 20px;
   height: 30px;
   margin-top: 30px;
   width: 20%;

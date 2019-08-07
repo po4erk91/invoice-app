@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import readXlsxFile from 'read-excel-file'
-import { createDocxApi, saveTemplateApi, sendEmailsApi, downloadArchive } from './api'
+import { createDocxApi, saveTemplateApi, sendEmailsApi, downloadArchive, resetAll } from './api'
 
 class App extends React.Component {
 
@@ -16,11 +16,12 @@ class App extends React.Component {
     customer: "",
     month: "",
     staff: "",
-    exportMessage: ""
+    exportMessage: "",
+    reset: ""
   }
 
   saveTemplate = async (e) => {
-    var bodyFormData = new FormData()
+    const bodyFormData = new FormData()
     bodyFormData.append('template', e.target.files[0]);
     const resp = await saveTemplateApi(bodyFormData)
     if(resp.status === 200){
@@ -142,7 +143,7 @@ class App extends React.Component {
     const promises = data.map(async item => await createDocxApi(item))
     const resp = await Promise.all(promises)
     if(resp.every(r => r.status === 200)){
-      this.setState({result: "Completed!", export: true})
+      this.setState({result: "Completed!", export: true, reset: "Invoices was generated!"})
     } else {
       this.setState({result: "Failed!"})
     }
@@ -167,6 +168,33 @@ class App extends React.Component {
       type="button"
       value="Generate"
       onClick={() => this.saveDock(this.state.xlsxData)}
+    />
+  }
+
+  resetAll = async () => {
+    const response = await resetAll()
+    if(response.status === 200) this.setState({
+      reset: response.data,
+      error: "",
+      xlsxData: [],
+      result: "Add your files .xlsx",
+      template: "Add your template .docx",
+      trigger: false,
+      export: false,
+      customerData: [],
+      customer: "",
+      month: "",
+      staff: "",
+      exportMessage: ""
+    })
+  }
+
+  renderResetBtn = () => {
+    return <input
+      className="reset"
+      type="button"
+      value="Reset"
+      onClick={() => this.resetAll()}
     />
   }
 
@@ -207,7 +235,7 @@ class App extends React.Component {
   renderTemplateWrapper = () => {
     return(
       <div>
-        {this.renderFileInput("template",e => this.saveTemplate(e))}
+        {this.renderFileInput("template",e => {this.saveTemplate(e); e.target.value = null})}
         {this.renderLabel("template","Choose a Template")}
         {this.renderMessage(this.state.template)}
       </div>
@@ -249,6 +277,7 @@ class App extends React.Component {
     return (
       <div className="App">
         <div className="App-header">
+          {this.renderMessage(this.state.reset)}
           {this.renderMessage(this.state.error)}
           {this.renderTemplateWrapper()}
           {this.renderInputWrapper()}
@@ -256,6 +285,7 @@ class App extends React.Component {
           {this.renderMessage(this.state.result)}
           {this.state.export && this.renderExport()}
           {this.renderMessage(this.state.exportMessage)}
+          {this.renderResetBtn()}
         </div>
       </div>
     );

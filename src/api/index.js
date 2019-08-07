@@ -1,5 +1,6 @@
 const axios = require('axios');
 const host = 'https://invoicesserver.herokuapp.com'
+// const host = 'http://127.0.0.1:5000'
 
 const request = async (url, method, data, formData, type) => {
   const contentType = formData ? 'multipart/form-data' : 'application/json'
@@ -33,7 +34,12 @@ const downloadArchive = async () => {
   return await request("/download", "get", false, false, 'blob')
 }
 
+const resetAll = async () => {
+  return await request("/reset", "get", false, false, 'text')
+}
+
 export {
+  resetAll,
   createDocxApi,
   saveTemplateApi,
   downloadArchive,

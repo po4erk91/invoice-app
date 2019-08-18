@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import readXlsxFile from 'read-excel-file'
-import { createDocxApi, saveTemplateApi, sendEmailsApi, downloadArchive, resetAll } from './api'
+import { createDocxApi, saveTemplateApi, sendEmailsApi, downloadArchive, resetAll, emailMessage } from './api'
 
 class App extends React.Component {
 
@@ -13,11 +13,20 @@ class App extends React.Component {
     trigger: false,
     export: false,
     customerData: [],
+    generate: "",
     customer: "",
     month: "",
     staff: "",
     exportMessage: "",
-    reset: ""
+    reset: "",
+    showPopup: false,
+    email: "",
+    message: ""
+  }
+
+  async componentDidMount(){
+    const resp = await emailMessage()
+    resp.status === 200 && this.setState({message: resp.data.message})
   }
 
   saveTemplate = async (e) => {
@@ -34,15 +43,23 @@ class App extends React.Component {
   sendEmails = async () => {
     const emails = []
     this.state.xlsxData.forEach(item => {
-      emails.push({email: item.StaffEmail, name: item.StaffNameEN})
+      emails.push({
+        email: item.StaffEmail,
+        name: item.StaffNameEN,
+      })
     })
-    const resp = await sendEmailsApi(emails)
+    const resp = await sendEmailsApi({emails, message: this.state.message})
     if(resp.status === 200){
       this.setState({
+        showPopup: false,
         exportMessage: "Emails was sended!"
       })
+    } else {
+      this.setState({
+        showPopup: false,
+        exportMessage: "Emails not sended!"
+      })
     }
-    console.log(resp)
   }
 
   setData = (arr) => {
@@ -51,8 +68,9 @@ class App extends React.Component {
     if(xlsxData.length){
       newArr = []
       xlsxData.forEach((item, i) => {
+        const customer = customerData.find(c => c.CustomerId === item.MonthId)
         newArr.push({
-          ...customerData[0],
+          ...customer,
           ...item,
           ...arr[i]
         })
@@ -73,29 +91,30 @@ class App extends React.Component {
       const added = customer === "Added!" && staff === "Added!" && month === "Added!"
       this.setState({
         trigger: added,
-        result: added ? "Press Generate to create PDF" : this.state.result
+        generate: added && "Press Generate to create PDF"
       })
     })
   }
 
   saveXlsxData = (file, type) => {
     readXlsxFile(file).then((rows) => {
-      const names = rows[0];
-      const customers = [];
-      const arr = []
+      const headers = rows[0];
+      const data = [];
+      const arr = [];
+
       for(let i = 1; i < rows.length; i++){
-        const customer = {
+        const dataItem = {
           titles: [],
-          customer: []
+          bodies: []
         }
-        customer.customer = rows[i]
-        customer.titles = names;
-        customers.push(customer)
+        dataItem.bodies = rows[i]
+        dataItem.titles = headers;
+        data.push(dataItem)
       }
-      customers.forEach((item) => {
+      data.forEach((item) => {
         let obj = {}
         item.titles.forEach((title, i) => {
-          obj[type + title.replace(':','')] = item.customer[i]
+          obj[type + title.replace(':','')] = item.bodies[i]
         })
         arr.push(obj)
       })
@@ -139,13 +158,13 @@ class App extends React.Component {
   }
 
   saveDock = async (data) => {
-    this.setState({result: "Loading..."})
+    this.setState({generate: "Loading..."})
     const promises = data.map(async item => await createDocxApi(item))
     const resp = await Promise.all(promises)
     if(resp.every(r => r.status === 200)){
-      this.setState({result: "Completed!", export: true, reset: "Invoices was generated!"})
+      this.setState({generate: "Completed!", export: true, reset: "Invoices was generated!"})
     } else {
-      this.setState({result: "Failed!"})
+      this.setState({generate: "Failed!"})
     }
   }
 
@@ -183,6 +202,7 @@ class App extends React.Component {
       export: false,
       customerData: [],
       customer: "",
+      generate: "",
       month: "",
       staff: "",
       exportMessage: ""
@@ -201,19 +221,19 @@ class App extends React.Component {
   renderInputWrapper = () => {
     return <div className="input-wrapper">
       <div className="input-block">
-        {this.renderMessage(this.state.customer)}
         {this.renderFileInput("customer",e => this.saveCustomer(e, 'Customer'))}
         {this.renderLabel("customer","Choose a Customer")}
+        {this.state.customer && this.renderMessage(this.state.customer)}
       </div>
       <div className="input-block">
-        {this.renderMessage(this.state.month)}
         {this.renderFileInput("month",e => this.saveMonth(e, 'Month'))}
         {this.renderLabel("month","Choose a Month")}
+        {this.state.month && this.renderMessage(this.state.month)}
       </div>
       <div className="input-block">
-        {this.renderMessage(this.state.staff)}
         {this.renderFileInput("staff",e => this.saveStaff(e, 'Staff'))}
         {this.renderLabel("staff","Choose a Staff")}
+        {this.state.staff && this.renderMessage(this.state.staff)}
       </div>
     </div>
   }
@@ -223,10 +243,10 @@ class App extends React.Component {
   }
 
   renderFileInput = (type,func) => {
-    return <input 
-      type="file" 
+    return <input
+      type="file"
       name={type}
-      id={type} 
+      id={type}
       className="inputfile"
       onChange={func}
     />
@@ -235,9 +255,9 @@ class App extends React.Component {
   renderTemplateWrapper = () => {
     return(
       <div>
+        {this.renderMessage(this.state.template)}
         {this.renderFileInput("template",e => {this.saveTemplate(e); e.target.value = null})}
         {this.renderLabel("template","Choose a Template")}
-        {this.renderMessage(this.state.template)}
       </div>
     )
   }
@@ -248,12 +268,20 @@ class App extends React.Component {
     </div>
   }
 
+  renderError = (message) => {
+    const {error} = this.state
+    const color = error.length ? "red" : "lightgreen"
+    return <div className="error" style={{color}}>
+      {message}
+    </div>
+  }
+
   renderSendMail = () => {
     return <input
       className="send-mail"
       type="button"
       value="Send Emails"
-      onClick={() => this.sendEmails()}
+      onClick={() => this.setState({showPopup: true})}
     />
   }
 
@@ -273,19 +301,57 @@ class App extends React.Component {
     </div>
   }
 
+  renderEmailPopup = () => {
+    return(
+      <div className="email-wrapper" onClick={(e) => {
+        e.target.className === "email-wrapper" && this.setState({showPopup: false})
+      }}>
+        <div className="email-container">
+          {/* {this.renderMessage("Enter your sending email:")}
+          <input
+            type="email"
+            name={"email"}
+            id={"email"}
+            className="inputemail"
+            onChange={(e) => this.setState({email: e.target.value})}
+          /> */}
+          {this.renderMessage("Enter your message:")}
+          <textarea
+            rows="10"
+            cols="45"
+            name="text"
+            className="email-text"
+            value={this.state.message}
+            onChange={(e) => this.setState({message: e.target.value})}
+          />
+          <input
+            className="send-mail"
+            type="button"
+            value="Send Emails"
+            onClick={() => this.sendEmails()}
+          />
+        </div>
+      </div>
+    )
+  }
+
   render() {
     return (
       <div className="App">
         <div className="App-header">
-          {this.renderMessage(this.state.reset)}
-          {this.renderMessage(this.state.error)}
+          {this.renderError(this.state.error || this.state.reset)}
           {this.renderTemplateWrapper()}
-          {this.renderInputWrapper()}
-          {this.state.trigger && this.renderGenerateBtn()}
+
           {this.renderMessage(this.state.result)}
+          {this.renderInputWrapper()}
+          
+          {this.state.trigger && this.renderGenerateBtn()}
+          {this.renderMessage(this.state.generate)}
+
           {this.state.export && this.renderExport()}
           {this.renderMessage(this.state.exportMessage)}
           {this.renderResetBtn()}
+          {this.state.showPopup && this.renderEmailPopup()}
         </div>
       </div>
     );

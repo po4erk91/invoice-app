@@ -38,7 +38,12 @@ const resetAll = async () => {
   return await request("/reset", "get", false, false, 'text')
 }
 
+const emailMessage = async () => {
+  return await request("/emailMessage", "get", false, false, 'text')
+}
+
 export {
+  emailMessage,
   resetAll,
   createDocxApi,
   saveTemplateApi,

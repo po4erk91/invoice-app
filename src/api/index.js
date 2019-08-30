@@ -1,6 +1,6 @@
 const axios = require('axios');
-// const host = 'https://invoicesserver.herokuapp.com'
-const host = 'http://127.0.0.1:5000'
+const host = 'https://invoicesserver.herokuapp.com'
+// const host = 'http://127.0.0.1:5000'
 
 const request = async (url, method, data, formData, type) => {
   const contentType = formData ? 'multipart/form-data' : 'application/json'

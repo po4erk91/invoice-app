@@ -1,6 +1,6 @@
 const axios = require('axios');
-const host = 'https://invoicesserver.herokuapp.com'
-// const host = 'http://127.0.0.1:5000'
+// const host = 'https://invoicesserver.herokuapp.com'
+const host = 'http://127.0.0.1:5000'
 
 const request = async (url, method, data, formData, type) => {
   const contentType = formData ? 'multipart/form-data' : 'application/json'
@@ -10,7 +10,7 @@ const request = async (url, method, data, formData, type) => {
     url: `${host}${url}`,
     data,
     responseType,
-    config: { 
+    config: {
       headers: {
         'Content-Type': contentType
       }
@@ -18,8 +18,12 @@ const request = async (url, method, data, formData, type) => {
   })
 }
 
-const createDocxApi = async (data) => {
-  return await request("/create", "post", data)
+const createDocxApi = async (docxs, folderID) => {
+  const items = {
+    docxs,
+    folderID
+  }
+  return await request("/create", "post", items)
 }
 
 const saveTemplateApi = async (data) => {
@@ -42,6 +46,10 @@ const emailMessage = async () => {
   return await request("/emailMessage", "get", false, false, 'text')
 }
 
+const getGoogleFolderId = async () => {
+  return await request("/getGoogleFolderId", "get", false, false, 'text')
+}
+
 export {
   emailMessage,
   resetAll,
@@ -49,4 +57,5 @@ export {
   saveTemplateApi,
   downloadArchive,
   sendEmailsApi,
+  getGoogleFolderId
 }

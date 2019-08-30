@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import readXlsxFile from 'read-excel-file'
-import { createDocxApi, saveTemplateApi, sendEmailsApi, downloadArchive, resetAll, emailMessage } from './api'
+import { getGoogleFolderId, createDocxApi, saveTemplateApi, sendEmailsApi, downloadArchive, resetAll, emailMessage } from './api'
 
 class App extends React.Component {
 
@@ -20,11 +20,10 @@ class App extends React.Component {
     exportMessage: "",
     reset: "",
     showPopup: false,
-    email: "",
     message: ""
   }
 
-  async componentDidMount(){
+  async componentWillMount(){
     const resp = await emailMessage()
     resp.status === 200 && this.setState({message: resp.data.message})
   }
@@ -159,7 +158,8 @@ class App extends React.Component {
 
   saveDock = async (data) => {
     this.setState({generate: "Loading..."})
-    const promises = data.map(async item => await createDocxApi(item))
+    const google = await getGoogleFolderId()
+    const promises = data.map(async item => await createDocxApi(item, google.data))
     const resp = await Promise.all(promises)
     if(resp.every(r => r.status === 200)){
       this.setState({generate: "Completed!", export: true, reset: "Invoices was generated!"})
@@ -307,14 +307,6 @@ class App extends React.Component {
         e.target.className === "email-wrapper" && this.setState({showPopup: false})
       }}>
         <div className="email-container">
-          {/* {this.renderMessage("Enter your sending email:")}
-          <input
-            type="email"
-            name={"email"}
-            id={"email"}
-            className="inputemail"
-            onChange={(e) => this.setState({email: e.target.value})}
-          /> */}
           {this.renderMessage("Enter your message:")}
           <textarea
             rows="10"
